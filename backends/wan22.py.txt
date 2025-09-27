@@ -1,0 +1,30 @@
+import os, tempfile, uuid, subprocess, shlex
+
+WAN22_DIR = "/workspace/Wan2.2"
+
+def _tmp(ext="mp4"):
+    return os.path.join(tempfile.mkdtemp(), f"{uuid.uuid4().hex}.{ext}")
+
+def _run(cmd: str, cwd: str = WAN22_DIR):
+    p = subprocess.run(shlex.split(cmd), cwd=cwd, capture_output=True, text=True)
+    if p.returncode != 0:
+        raise RuntimeError(p.stderr[:1000])
+    return p.stdout
+
+def i2v(image_path: str, seconds: int = 4, fps: int = 16, size: str = "1280*704", offload: bool = True):
+    out_mp4 = _tmp("mp4")
+    cmd = f'python generate.py --task i2v-a14B --size {size} --offload_model {offload} --seconds {seconds} --fps {fps} --input {image_path} --out {out_mp4}'
+    _run(cmd)
+    return out_mp4
+
+def animate(prompt: str, seconds: int = 4, fps: int = 16, size: str = "1280*704", offload: bool = True):
+    out_mp4 = _tmp("mp4")
+    cmd = f'python generate.py --task animate-14B --size {size} --offload_model {offload} --seconds {seconds} --fps {fps} --prompt "{prompt}" --out {out_mp4}'
+    _run(cmd)
+    return out_mp4
+
+def ti2v(prompt: str, size: str = "1280*704", offload: bool = True):
+    out_mp4 = _tmp("mp4")
+    cmd = f'python generate.py --task ti2v-5B --size {size} --offload_model {offload} --convert_model_dtype --t5_cpu --prompt "{prompt}" --out {out_mp4}'
+    _run(cmd)
+    return out_mp4
